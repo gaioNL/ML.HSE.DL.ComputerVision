@@ -1,0 +1,26 @@
+from pyspark import SparkContext, SparkConf, SQLContext
+#!/usr/bin/env python
+"""
+
+Copyright Google Inc. 2016
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+
+for USER_ID in range(0, 100):
+  dfUserRatings = dfRates.filter(dfRates.userId == USER_ID).rdd.map(lambda r: r.accoId).collect()
+  rddPotential  = dfAccos.rdd.filter(lambda x: x[0] not in dfUserRatings)
+  pairsPotential = rddPotential.map(lambda x: (USER_ID, x[0]))
+  predictions = model.predictAll(pairsPotential).map(lambda p: (str(p[0]), str(p[1]), float(p[2])))
+  predictions = predictions.takeOrdered(5, key=lambda x: -x[2]) # top 5
+  print("predicted for user={0}".format(USER_ID))
+  if (allPredictions == None):
+    allPredictions = predictions
+  else:
+    allPredictions.extend(predictions)
+# write them
+schema = StructType([StructField("userId", StringType(), True), StructField("accoId", StringType(), True), StructField("prediction", FloatType(), True)])
+dfToSave = sqlContext.createDataFrame(allPredictions, schema)
+dfToSave.write.jdbc(url=jdbcUrl, table='Recommendation', mode='overwrite')
